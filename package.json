@@ -23,8 +23,5 @@
     "react": "16.13.1",
     "react-native": "^0.63.3"
   },
-  "homepage": "https://github.com/kev-ac/react-native-sunmi-v2-printer.git",
-  "directories": {
-    "example": "example"
-  }
+  "homepage": "https://github.com/kev-ac/react-native-sunmi-v2-printer.git"
 }
