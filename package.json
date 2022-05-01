@@ -13,14 +13,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [
-    "react-native",
-    "sunmi",
-    "printer"
-  ],
+  "keywords": ["react-native", "sunmi", "printer"],
   "license": "MIT",
   "peerDependencies": {
-    "react": "16.13.1",
+    "react": "^17.0.2",
     "react-native": "^0.63.3"
   },
   "homepage": "https://github.com/kev-ac/react-native-sunmi-v2-printer.git"
