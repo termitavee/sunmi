@@ -5,7 +5,7 @@
 
 ## SUNMI V2 Printer for React-Native
 
-This project is forked from [jeylabs/react-native-sunmi-v2-printer](https://github.com/jeylabs/react-native-sunmi-v2-printer).
+This project is forked from [kev-ac/react-native-sunmi-v2-printer](https://github.com/kev-ac/react-native-sunmi-v2-printer).
 
 Offical Demos refer: https://github.com/shangmisunmi/SunmiPrinterDemo
 
@@ -16,8 +16,8 @@ Offical Demos refer: https://github.com/shangmisunmi/SunmiPrinterDemo
 Install from source
 
 ```bash
-npm install https://github.com/kev-ac/react-native-sunmi-v2-printer.git --save
-yarn add https://github.com/kev-ac/react-native-sunmi-v2-printer.git --save
+npm install https://github.com/syumai/react-native-sunmi-v2-printer.git --save
+yarn add https://github.com/syumai/react-native-sunmi-v2-printer.git --save
 ```
 
 **Step 2:** (For React-Native < 0.60)
@@ -91,7 +91,3 @@ import SunmiV2Printer from 'react-native-sunmi-v2-printer';
 | KNIFE_ERROR_2_ACTION | 切刀异常2－切刀修复 |
 | OVER_HEATING_ACITON | Printer is overheat |
 | FIRMWARE_UPDATING_ACITON | Upgrade printer's firmware |
-
-### Example
-
-Please check on `example/` floder
