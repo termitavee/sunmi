@@ -71,11 +71,11 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
      */
     private SunmiPrinterService sunmiPrinterService;
 
-    private static SunmiPrintHelper helper = new SunmiPrintHelper();
+    private static SunmiV2PrinterModule helper = new SunmiV2PrinterModule();
 
-    private SunmiPrintHelper() {}
+    private SunmiV2PrinterModule() {}
 
-    public static SunmiPrintHelper getInstance() {
+    public static SunmiV2PrinterModule getInstance() {
         return helper;
     }
 
