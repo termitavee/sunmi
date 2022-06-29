@@ -47,12 +47,9 @@ import com.sunmi.peripheral.printer.InnerPrinterManager;
 import com.sunmi.peripheral.printer.InnerResultCallback;
 import com.sunmi.peripheral.printer.SunmiPrinterService;
 import com.sunmi.peripheral.printer.WoyouConsts;
-import com.sunmi.printerhelper.R;
-
 
 public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     public static ReactApplicationContext reactApplicationContext = null;
-    private IWoyouService woyouService;
     private BitmapUtils bitMapUtils;
     private PrinterReceiver receiver = new PrinterReceiver();
 
@@ -71,11 +68,9 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
      */
     private SunmiPrinterService sunmiPrinterService;
 
-    private static SunmiV2PrinterModule helper = new SunmiV2PrinterModule();
+    private static SunmiPrintHelper helper = new SunmiPrintHelper();
 
-    private SunmiV2PrinterModule() {}
-
-    public static SunmiV2PrinterModule getInstance() {
+    public static SunmiPrintHelper getInstance() {
         return helper;
     }
 
@@ -107,7 +102,7 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
         @Override
         public void onServiceDisconnected(ComponentName name) {
             Log.i(TAG, "Service disconnected: " + name);
-            woyouService = null;
+            // woyouService = null;
         }
 
         @Override
@@ -147,6 +142,7 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     }
 
 
+    /*
     @Override
     public Map<String, Object> getConstants() {
         final Map<String, Object> constants = new HashMap<>();
@@ -178,6 +174,7 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
 
         return constants;
     }
+    */
 
     /**
      * Initialize the printer, reset the logic program of the printer, but do not clear the buffer data, so
@@ -187,19 +184,18 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
      */    
     @ReactMethod
     public void printerInit(final Promise promise) {
-        try {
-            boolean ret =  InnerPrinterManager.getInstance().bindService(context,innerPrinterCallback);
-            if(!ret){
-                sunmiPrinter = NoSunmiPrinter;
-                promise.reject("" + 0, noPrinter);
-                
-            }
-            promise.resolve(null);
 
-        } catch (InnerPrinterException e) {
+        if(sunmiPrinterService == null){
+            //TODO Service disconnection processing
+            promise.reject("not-supported", "Device not supported");
+        }
+
+        try {
+            sunmiPrinterService.printerInit(null);
+            promise.resolve(null);
+        } catch (RemoteException e) {
             e.printStackTrace();
             promise.reject("" + 0, e.getMessage());
-
         }
     }
 
@@ -367,13 +363,6 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     //     });
     // }
 
-    /**
-     * The printer feeds the paper (forced line feed, and feeds n lines after finishing the previous print content)
-     *
-     * @param n:       Lines of paper
-     * @param callback resault callback
-     * @return
-     */
     // @ReactMethod
     // public void lineWrap(int n, final Promise p) {
     //     // final IWoyouService ss = woyouService;
@@ -416,39 +405,24 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     //     });
     // }
 
-    /**
-     * print with raw instructions
-     *
-     * @param data     instruction
-     * @param callback resault callback
-     */
     @ReactMethod
     public void sendRAWData(String base64EncriptedData, final Promise promise) {
+        if(sunmiPrinterService == null){
+            promise.reject("" + 0, noPrinter);
+        }
+        try {
+            final byte[] data = Base64.decode(base64EncriptedData, Base64.DEFAULT);
 
-        public void sendRawData(byte[] data) {
-            if(sunmiPrinterService == null){
-                promise.reject("" + 0, noPrinter);
-            }
-            try {
-                final byte[] data = Base64.decode(base64EncriptedData, Base64.DEFAULT);
+            sunmiPrinterService.sendRAWData(data, null);
+            promise.resolve(null);
 
-                sunmiPrinterService.sendRAWData(data, null);
-                promise.resolve(null);
-
-            } catch (RemoteException e) {
-                handleRemoteException(e);
-                Log.i(TAG, "ERROR: " + e.getMessage());
-                p.reject("" + 0, e.getMessage());
-            }
+        } catch (RemoteException e) {
+            handleRemoteException(e);
+            Log.i(TAG, "ERROR: " + e.getMessage());
+            promise.reject("" + 0, e.getMessage());
         }
     }
 
-    /**
-     * Set the alignment mode, which will affect subsequent printing unless initialized
-     *
-     * @param alignment: Alignment 0--left, 1--center, 2--right
-     * @param callback   resault callback
-     */
     @ReactMethod
     public void setAlignment(int alignment, final Promise promise) {
         if(sunmiPrinterService == null){
@@ -464,12 +438,6 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
         }
     }
 
-    /**
-     * Set the print font, which will affect subsequent printing unless initialized
-     * (Only one font "gh" is currently supported, gh is a monospaced Chinese font, and more font choices will be provided in the future)
-     *
-     * @param typeface: font name
-     */
     // @ReactMethod
     // public void setFontName(String typeface, final Promise p) {
     //     // final IWoyouService ss = woyouService;
@@ -512,14 +480,6 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     //     });
     // }
 
-    /**
-     * Set the font size, which will affect subsequent printing unless initialized
-     * Note: Font size is beyond standard international instructions for printing,
-     * Adjusting the font size will affect the character width, and the number of characters per line will also change,
-     * Therefore, typography in monospaced fonts may be messed up
-     *
-     * @param fontsize: font size
-     */
     // @ReactMethod
     // public void setFontSize(float fontsize, final Promise p) {
     //     // final IWoyouService ss = woyouService;
@@ -563,13 +523,6 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     // }
 
 
-    /**
-     * Print the text of the specified font, the font setting is only valid for this time
-     *
-     * @param text:     to print text
-     * @param typeface: Font name (currently only "gh" font is supported)
-     * @param fontsize: font size
-     */
     // @ReactMethod
     // public void printTextWithFont(String text, String typeface, float fontsize, final Promise p) {
     //     // final IWoyouService ss = woyouService;
@@ -614,14 +567,6 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     //     });
     // }
 
-    /**
-     * 打印表格的一行，可以指定列宽、对齐方式
-     *
-     * @param colsTextArr  各列文本字符串数组
-     * @param colsWidthArr 各列宽度数组(以英文字符计算, 每个中文字符占两个英文字符, 每个宽度大于0)
-     * @param colsAlign    各列对齐方式(0居左, 1居中, 2居右)
-     *                     备注: 三个参数的数组长度应该一致, 如果colsText[i]的宽度大于colsWidth[i], 则文本换行
-     */
     // @ReactMethod
     // public void printColumnsText(ReadableArray colsTextArr, ReadableArray colsWidthArr, ReadableArray colsAlign, final Promise p) {
     //     // final IWoyouService ss = woyouService;
@@ -676,13 +621,8 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     // }
 
 
-    /**
-     * 打印图片
-     *
-     * @param bitmap: 图片bitmap对象(最大宽度384像素，超过无法打印并且回调callback异常函数)
-     */
     @ReactMethod
-    public void printBitmap(String data, int width, int height, int orientation, final Promise promise) {
+    public void printBitmap(String data, int width, int height, final Promise promise) {
         if(sunmiPrinterService == null){
             promise.reject("" + 0, noPrinter);
             return;
@@ -691,18 +631,10 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
         try {
             byte[] decoded = Base64.decode(data, Base64.DEFAULT);
             final Bitmap bitMap = bitMapUtils.decodeBitmap(decoded, width, height);
-            // TODO review
-            if(orientation == 0){
-                sunmiPrinterService.printBitmap(bitmap, null);
-                sunmiPrinterService.printText("横向排列\n", null);
-                sunmiPrinterService.printBitmap(bitmap, null);
-                sunmiPrinterService.printText("横向排列\n", null);
-            }else{
-                sunmiPrinterService.printBitmap(bitmap, null);
-                sunmiPrinterService.printText("\n纵向排列\n", null);
-                sunmiPrinterService.printBitmap(bitmap, null);
-                sunmiPrinterService.printText("\n纵向排列\n", null);
-            }
+
+            sunmiPrinterService.printBitmap(bitMap, null);
+            sunmiPrinterService.printText(" \n", null);
+
             promise.resolve(null);
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -710,24 +642,6 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
         }
     }
 
-    /**
-     * 打印一维条码
-     *
-     * @param data:         条码数据
-     * @param symbology:    条码类型
-     *                      0 -- UPC-A，
-     *                      1 -- UPC-E，
-     *                      2 -- JAN13(EAN13)，
-     *                      3 -- JAN8(EAN8)，
-     *                      4 -- CODE39，
-     *                      5 -- ITF，
-     *                      6 -- CODABAR，
-     *                      7 -- CODE93，
-     *                      8 -- CODE128
-     * @param height:       条码高度, 取值1到255, 默认162
-     * @param width:        条码宽度, 取值2至6, 默认2
-     * @param textposition: 文字位置 0--不打印文字, 1--文字在条码上方, 2--文字在条码下方, 3--条码上下方均打印
-     */
     // @ReactMethod
     // public void printBarCode(String data, int symbology, int height, int width, int textposition, final Promise p) {
     //     // final IWoyouService ss = woyouService;
@@ -776,17 +690,6 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     //     });
     // }
 
-    /**
-     * 打印二维条码
-     *
-     * @param data:       二维码数据
-     * @param modulesize: 二维码块大小(单位:点, 取值 1 至 16 )
-     * @param errorlevel: 二维码纠错等级(0 至 3)，
-     *                    0 -- 纠错级别L ( 7%)，
-     *                    1 -- 纠错级别M (15%)，
-     *                    2 -- 纠错级别Q (25%)，
-     *                    3 -- 纠错级别H (30%)
-     */
     // @ReactMethod
     // public void printQRCode(String data, int modulesize, int errorlevel, final Promise p) {
     //     // final IWoyouService ss = woyouService;
@@ -832,34 +735,25 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     //     });
     // }
 
-    /**
-     * 打印文字，文字宽度满一行自动换行排版，不满一整行不打印除非强制换行
-     * 文字按矢量文字宽度原样输出，即每个字符不等宽
-     *
-     * @param text: 要打印的文字字符串
-     */
     @ReactMethod
     public void printOriginalText(String text, String typeface,final Promise promise) {
         if(sunmiPrinterService == null){
             promise.reject("" + 0, noPrinter);
             return;
         }
-        
+
         try {
-            final Int size = text.length();
+            final int size = text.length();
             sunmiPrinterService.printTextWithFont(text, typeface, size, null);
 
         } catch (Exception e) {
             e.printStackTrace();
             Log.i(TAG, "ERROR: " + e.getMessage());
-            p.reject("" + 0, e.getMessage());
+            promise.reject("" + 0, e.getMessage());
         }
-            
+
     }
 
-    /**
-     * 打印缓冲区内容
-     */
     // @ReactMethod
     // public void commitPrinterBuffer() {
     //     // final IWoyouService ss = woyouService;
@@ -877,11 +771,6 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     //     });
     // }
 
-    /**
-     * 进入缓冲模式，所有打印调用将缓存，调用commitPrinterBuffe()后打印
-     *
-     * @param clean: 是否清除缓冲区内容
-     */
     // @ReactMethod
     // public void enterPrinterBuffer(boolean clean) {
     //     // final IWoyouService ss = woyouService;
@@ -900,11 +789,6 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     //     });
     // }
 
-    /**
-     * 退出缓冲模式
-     *
-     * @param commit: 是否打印出缓冲区内容
-     */
     // @ReactMethod
     // public void exitPrinterBuffer(boolean commit) {
     //     // final IWoyouService ss = woyouService;
@@ -968,15 +852,11 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
     // }
 
     @ReactMethod
-    public void clearBuffer(final Promise promise    ) {
+    public void clearBuffer(final Promise promise) {
         try {
-            if(sunmiPrinterService != null){
-                InnerPrinterManager.getInstance().unBindService(context, innerPrinterCallback);
-                sunmiPrinterService = null;
-                sunmiPrinter = LostSunmiPrinter;
-            }
+            SunmiPrintHelper.getInstance().deInitSunmiPrinterService(reactApplicationContext);
             promise.resolve(null);
-        } catch (InnerPrinterException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             promise.reject("" + 0, e.getMessage());
         }
@@ -1054,5 +934,34 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
             promise.reject("" + 0, e.getMessage());
         }
     }
-    
+
+    private void handleRemoteException(RemoteException e){
+        //TODO process when get one exception
+    }
+
+    /**
+     * Check the printer connection,
+     * like some devices do not have a printer but need to be connected to the cash drawer through a print service
+     */
+    private void checkSunmiPrinterService(SunmiPrinterService service){
+        boolean ret = false;
+        try {
+            ret = InnerPrinterManager.getInstance().hasPrinter(service);
+        } catch (InnerPrinterException e) {
+            e.printStackTrace();
+        }
+        sunmiPrinter = ret?FoundSunmiPrinter:NoSunmiPrinter;
+    }
+
+    public void deInitSunmiPrinterService(Context context){
+        try {
+            if(sunmiPrinterService != null){
+                InnerPrinterManager.getInstance().unBindService(context, innerPrinterCallback);
+                sunmiPrinterService = null;
+                sunmiPrinter = LostSunmiPrinter;
+            }
+        } catch (InnerPrinterException e) {
+            e.printStackTrace();
+        }
+    }
 }
