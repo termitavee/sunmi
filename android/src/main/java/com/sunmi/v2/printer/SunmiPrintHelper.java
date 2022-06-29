@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.RemoteException;
+import android.util.Log;
 import android.widget.Toast;
 
 
@@ -154,12 +155,15 @@ public class SunmiPrintHelper {
      */
     public void initPrinter(){
         if(sunmiPrinterService == null){
+            Log.e("SDK-DEBUG", "Sunmi Printer service is not initialized");
             //TODO Service disconnection processing
             return;
         }
         try {
             sunmiPrinterService.printerInit(null);
+            Log.e("SDK-DEBUG", "Sunmi Printer is initialized");
         } catch (RemoteException e) {
+            Log.e("SDK-DEBUG", "Exception at initPrinter");
             handleRemoteException(e);
         }
     }
@@ -401,31 +405,15 @@ public class SunmiPrintHelper {
         }
     }
 
-    /**
-     *  Print pictures and text in the specified orde
-     *  After the picture is printed,
-     *  the line feed output needs to be called,
-     *  otherwise it will be saved in the cache
-     *  In this example, the image will be printed because the print text content is added
-     */
-    public void printBitmap(Bitmap bitmap, int orientation) {
+    public void printBitmap(Bitmap bitmap) {
         if(sunmiPrinterService == null){
             //TODO Service disconnection processing
             return;
         }
 
         try {
-            if(orientation == 0){
-                sunmiPrinterService.printBitmap(bitmap, null);
-                sunmiPrinterService.printText("横向排列\n", null);
-                sunmiPrinterService.printBitmap(bitmap, null);
-                sunmiPrinterService.printText("横向排列\n", null);
-            }else{
-                sunmiPrinterService.printBitmap(bitmap, null);
-                sunmiPrinterService.printText("\n纵向排列\n", null);
-                sunmiPrinterService.printBitmap(bitmap, null);
-                sunmiPrinterService.printText("\n纵向排列\n", null);
-            }
+            sunmiPrinterService.printBitmap(bitmap, null);
+            sunmiPrinterService.printText("\n\n\n\n", null);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
