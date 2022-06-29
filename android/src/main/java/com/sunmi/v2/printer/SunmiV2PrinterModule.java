@@ -422,7 +422,7 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
      * @param data     instruction
      * @param callback resault callback
      */
-    // @ReactMethod
+    @ReactMethod
     public void sendRAWData(String base64EncriptedData, final Promise promise) {
 
         public void sendRawData(byte[] data) {
@@ -449,7 +449,7 @@ public class SunmiV2PrinterModule extends ReactContextBaseJavaModule {
      * @param alignment: Alignment 0--left, 1--center, 2--right
      * @param callback   resault callback
      */
-    // @ReactMethod
+    @ReactMethod
     public void setAlignment(int alignment, final Promise promise) {
         if(sunmiPrinterService == null){
             promise.reject("" + 0, noPrinter);
